@@ -1,27 +1,3 @@
-
-// const mongoose = require("mongoose");
-// const express = require("express");
-// const Schema = mongoose.Schema;
-// const app = express();
-// const jsonParser = express.json();
-
-// const countryName = { type: String, required: true };
-// const capitalName = { type: String, required: true };
-// const population = { type: Number, required: true };
-
-// const countryScheme = new Schema({ country: countryName, capital: capitalName, population: population}, { versionKey: false });
-// const Country = mongoose.model("Country", countryScheme);
-
-// app.use(express.static(__dirname + "/public"));
-
-// mongoose.connect("mongodb://172.24.112.1:27017/world", { useUnifiedTopology: true, useNewUrlParser: true, useFindAndModify: false }, function (err) {
-//     if (err) return console.log(err);
-    
-//     app.listen(3000, function () {
-//         console.log("Server is waiting for a connection");
-//     });
-// });
-
 const mongoose = require("mongoose");
 const express = require("express");
 const Schema = mongoose.Schema;
