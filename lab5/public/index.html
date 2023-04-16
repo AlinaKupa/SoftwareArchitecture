@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Countries List</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <h2>Countries List</h2>
+    <form name="countryForm">
+        <input type="hidden" name="id" value="0" />
+        <div class="form-group">
+            <label for="country">Country:</label>
+            <input class="form-control" name="country" />
+        </div>
+        <div class="form-group">
+            <label for="capital">Capital:</label>
+            <input class="form-control" name="capital" id="capital" />
+        </div>        
+        <div class="form-group">
+            <label for="population">Population:</label>
+            <input class="form-control" name="population" />
+        </div>
+        <div class="panel-body">
+            <button type="submit" class="btn btn-sm btn-primary">Save</button>
+            <a id="reset" class="btn btn-sm btn-primary">Cancel</a>
+        </div>
+    </form>
+    <table class="table table-condensed table-striped table-bordered">
+        <thead><tr><th>Id</th><th>Country</th><th>Capital</th><th>Population</th><th></th></tr></thead>
+        <tbody>
+        </tbody>
+    </table>
+   
+    <script>
+    // Find all countries
+        async function GetCountries() {
+            // send query and receive a response
+            const response = await fetch("/api/countries", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            // if query was successful
+            if (response.ok === true) {
+                // receive data
+                const countries = await response.json();
+                let rows = document.querySelector("tbody"); 
+                countries.forEach(country => {
+                    // Add elements to the table
+                    rows.append(row(country));
+                });
+            }
+        }
+        // Get one country
+        async function GetCountry(id) {
+            const response = await fetch("/api/countries/" + id, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const country = await response.json();
+                const form = document.forms["countryForm"];
+                form.elements["id"].value = country._id;
+                form.elements["country"].value = country.country;
+                form.elements["capital"].value = country.capital;
+                form.elements["population"].value = country.population;
+            }
+        }
+        // Add a country
+        async function CreateCountry(countryName, capitalName, population) {
+  
+            const response = await fetch("api/countries", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    country: countryName,
+                    capital: capitalName,
+                    population: parseFloat(population, 10)
+                })
+            });
+            if (response.ok === true) {
+                const country = await response.json();
+                reset();
+                document.querySelector("tbody").append(row(country));
+            }
+        }
+
+        async function EditCountry(countryId, countryName, capitalName, population) {
+                const response = await fetch("api/countries/" , {
+                    method: "PUT",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        id: countryId,
+                        country: countryName,
+                        capital: capitalName,
+                        population: parseFloat(population, 10)
+                    })
+                });
+
+                if (response.ok === true) {
+                    const country = await response.json();
+                    reset();
+                    document.querySelector("tr[data-rowid='" + country._id + "']").replaceWith(row(country));
+                }
+            }
+
+            function onEditClick() {
+                const countryId = this.getAttribute("data-id");
+                GetCountry(countryId);
+            }
+
+            // Add event listeners to all edit links
+            const editLinks = document.querySelectorAll(".editLink");
+            editLinks.forEach(editLink => {
+                editLink.addEventListener("click", onEditClick);
+            });
+        // Delete country
+        async function DeleteCountry(id) {
+            const response = await fetch("/api/countries/" + id , {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const country = await response.json();
+                document.querySelector("tr[data-rowid='" + country._id + "']").remove();
+            }
+        }
+  
+        // Form reset
+        function reset() {
+            const form = document.forms["countryForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+        }
+        // Row creating in table
+        function row(country) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${country._id}</td><td>${country.country}</td><td>${country.capital}</td><td>${country.population}</td><td><a class="editLink" data-id="${country._id}">Edit</a> | <a class="removeLink" data-id="${country._id}">Delete</a></td>`;
+            tr.setAttribute("data-rowid", country._id);
+            return tr;
+  
+            //const tr = document.createElement("tr");
+            // tr.setAttribute("data-rowid", country._id);
+  
+            const idTd = document.createElement("td");
+            idTd.append(country._id);
+            tr.append(idTd);
+  
+            const countryTd = document.createElement("td");
+            countryTd.append(country.country);
+            tr.append(countryTd);
+  
+            const capitalTd = document.createElement("td");
+            capitalTd.append(country.capital);
+            tr.append(capitalTd);
+
+            const populationTd = document.createElement("td");
+            populationTd.append(country.population);
+            tr.append(populationTd);
+              
+            const linksTd = document.createElement("td");
+  
+            const editLink = document.createElement("a");
+            editLink.setAttribute("data-id", country._id);
+            editLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            editLink.append("Edit");
+            editLink.addEventListener("click", e => {
+  
+                e.preventDefault();
+                GetUser(country._id);
+            });
+            linksTd.append(editLink);
+  
+            const removeLink = document.createElement("a");
+            removeLink.setAttribute("data-id", country._id);
+            removeLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            removeLink.append("Delete");
+            removeLink.addEventListener("click", e => {
+  
+                e.preventDefault();
+                DeleteCountry(country._id);
+            });
+  
+            linksTd.append(removeLink);
+            tr.appendChild(linksTd);
+  
+            return tr;
+        }
+        // Form reset
+        document.getElementById("reset").addEventListener("click", function(e) {
+            e.preventDefault();
+            reset();
+        })
+  
+        // Form sending
+        document.forms["countryForm"].addEventListener("submit", e => {
+            e.preventDefault();
+            const form = document.forms["countryForm"];
+            const id = form.elements["id"].value;
+            const countryName = form.elements["country"].value;
+            const capitalName = form.elements["capital"].value;
+            const population = form.elements["population"].value;
+            if (id == 0)
+                CreateCountry(countryName, capitalName, population);
+            else
+                EditCountry(id, countryName, capitalName, population);
+        });
+  
+        // Get countries
+        GetCountries();
+        document.addEventListener("click", async function (e) {
+                if (e.target.classList.contains("editLink")) {
+                    const id = e.target.getAttribute("data-id");
+                    await GetCountry(id);
+                }
+                else if (e.target.classList.contains("removeLink")) {
+                    const id = e.target.getAttribute("data-id");
+                    await DeleteCountry(id);
+                }
+            });
+            document.addEventListener("click", async function (e) {
+                    if (e.target.classList.contains("editLink")) {
+                        const id = e.target.getAttribute("data-id");
+                        await GetCountry(id);
+                    }
+
+                    if (e.target.classList.contains("removeLink")) {
+                        const id = e.target.getAttribute("data-id");
+                        await DeleteCountry(id);
+                    }
+                });
+    </script>
+</body>
+</html>
+
